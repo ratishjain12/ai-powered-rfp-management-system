@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model RFP {
+  id              String      @id @default(cuid())
+  title           String
+  description     String?
+  budget          String?
+  deliveryTimeline String?
+  paymentTerms    String?
+  warranty        String?
+  status          String      @default("draft") // draft, sent, closed
+  items           String      // JSON array: [{name, quantity, specifications}]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  vendors         RFPVendor[]
+  rawEmails       RawEmail[]
+  proposals       Proposal[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Vendor {
+  id        String      @id @default(cuid())
+  name      String
+  email     String      @unique
+  notes     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  rfps      RFPVendor[]
+  rawEmails RawEmail[]
+  proposals Proposal[]
+
+  @@index([email])
+}
+
+model RFPVendor {
+  id        String   @id @default(cuid())
+  rfpId     String
+  vendorId  String
+  sentAt    DateTime?
+  status    String   @default("pending") // pending, sent, responded
+
+  // Relations
+  rfp       RFP      @relation(fields: [rfpId], references: [id], onDelete: Cascade)
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([rfpId, vendorId])
+  @@index([rfpId])
+  @@index([vendorId])
+  @@index([status])
+}
+
+model RawEmail {
+  id          String    @id @default(cuid())
+  rfpId       String?
+  vendorId    String?
+  subject     String
+  fromEmail   String
+  body        String
+  attachments String?   // JSON array of attachment metadata
+  receivedAt  DateTime  @default(now())
+
+  // Relations
+  rfp         RFP?      @relation(fields: [rfpId], references: [id], onDelete: SetNull)
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  proposal    Proposal?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([rfpId])
+  @@index([vendorId])
+  @@index([fromEmail])
+  @@index([receivedAt])
+}
+
+model Proposal {
+  id               String    @id @default(cuid())
+  rawEmailId       String    @unique
+  rfpId            String
+  vendorId         String
+  totalCost        String?
+  deliveryTerms    String?
+  paymentTerms     String?
+  warranty         String?
+  lineItems        String?   // JSON array: [{itemName, price, quantity, specifications}]
+  completenessScore Float?   // 0-1 score indicating how complete the proposal is
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  rawEmail         RawEmail  @relation(fields: [rawEmailId], references: [id], onDelete: Cascade)
+  rfp              RFP       @relation(fields: [rfpId], references: [id], onDelete: Cascade)
+  vendor           Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([rfpId])
+  @@index([vendorId])
+  @@index([rawEmailId])
+}
