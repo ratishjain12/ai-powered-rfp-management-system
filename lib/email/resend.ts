@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { Webhook } from "svix";
 
 if (!process.env.RESEND_API_KEY) {
   throw new Error("RESEND_API_KEY is not set in environment variables");
@@ -58,11 +59,26 @@ export async function sendRFPEmail({
   }
 }
 
-export function verifyResendWebhookSignature(signature: string): boolean {
-  const expectedSecret = process.env.RESEND_WEBHOOK_SECRET;
-  if (!expectedSecret) {
+export function verifyResendWebhookSignature(
+  payload: string,
+  headers: {
+    "svix-id": string;
+    "svix-timestamp": string;
+    "svix-signature": string;
+  }
+): boolean {
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) {
     console.warn("RESEND_WEBHOOK_SECRET not set, skipping verification");
     return true;
   }
-  return signature === expectedSecret;
+
+  const wh = new Webhook(secret);
+  try {
+    wh.verify(payload, headers);
+    return true;
+  } catch (err) {
+    console.error("Webhook verification failed:", err);
+    return false;
+  }
 }

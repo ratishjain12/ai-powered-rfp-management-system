@@ -17,7 +17,7 @@ interface Vendor {
   name: string;
   email: string;
   notes?: string | null;
-  createdAt: Date;
+  createdAt: string | Date;
 }
 
 interface VendorTableProps {

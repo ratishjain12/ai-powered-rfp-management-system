@@ -20,7 +20,7 @@ interface Vendor {
   name: string;
   email: string;
   notes?: string | null;
-  createdAt: string;
+  createdAt: string | Date;
 }
 
 export default function VendorsPage() {
@@ -48,10 +48,16 @@ export default function VendorsPage() {
     fetchVendors();
   }, []);
 
-  const handleSubmit = async (data: { name: string; email: string; notes?: string }) => {
+  const handleSubmit = async (data: {
+    name: string;
+    email: string;
+    notes?: string;
+  }) => {
     try {
       setError(null);
-      const url = editingVendor ? `/api/vendors/${editingVendor.id}` : "/api/vendors";
+      const url = editingVendor
+        ? `/api/vendors/${editingVendor.id}`
+        : "/api/vendors";
       const method = editingVendor ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -120,13 +126,18 @@ export default function VendorsPage() {
         isLoading={isLoading}
       />
 
-      <Dialog open={isDialogOpen} onOpenChange={(open) => {
-        setIsDialogOpen(open);
-        if (!open) setEditingVendor(null);
-      }}>
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setEditingVendor(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingVendor ? "Edit Vendor" : "Add New Vendor"}</DialogTitle>
+            <DialogTitle>
+              {editingVendor ? "Edit Vendor" : "Add New Vendor"}
+            </DialogTitle>
             <DialogDescription>
               {editingVendor
                 ? "Update vendor information"
@@ -135,7 +146,14 @@ export default function VendorsPage() {
           </DialogHeader>
           <VendorForm
             onSubmit={handleSubmit}
-            defaultValues={editingVendor || undefined}
+            defaultValues={
+              editingVendor
+                ? {
+                    ...editingVendor,
+                    notes: editingVendor.notes || undefined,
+                  }
+                : undefined
+            }
             submitLabel={editingVendor ? "Update Vendor" : "Create Vendor"}
           />
         </DialogContent>
@@ -143,4 +161,3 @@ export default function VendorsPage() {
     </div>
   );
 }
-

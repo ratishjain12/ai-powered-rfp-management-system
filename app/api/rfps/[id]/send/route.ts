@@ -141,7 +141,7 @@ Please submit your proposal by replying to this email.`;
       try {
         await sendRFPEmail({
           to: vendor.email,
-          subject: rfp.title,
+          subject: `${rfp.title} [REF:${rfp.id}]`,
           html: emailHtml,
           text: emailText,
           replyTo: process.env.RESEND_REPLY_TO || "rfp@updates.ratishfolio.com",

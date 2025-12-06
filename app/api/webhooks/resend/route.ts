@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { verifyResendWebhookSignature } from "@/lib/email";
+import { verifyResendWebhookSignature } from "@/lib/email/resend";
 
 export async function POST(request: NextRequest) {
   try {
-    const signature = request.headers.get("resend-signature") || "";
+    const svix_id = request.headers.get("svix-id") ?? "";
+    const svix_timestamp = request.headers.get("svix-timestamp") ?? "";
+    const svix_signature = request.headers.get("svix-signature") ?? "";
     const body = await request.text();
 
-    if (!verifyResendWebhookSignature(body, signature)) {
+    if (
+      !verifyResendWebhookSignature(body, {
+        "svix-id": svix_id,
+        "svix-timestamp": svix_timestamp,
+        "svix-signature": svix_signature,
+      })
+    ) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
@@ -31,18 +39,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    const rfpVendor = await prisma.rFPVendor.findFirst({
-      where: {
-        vendorId: vendor.id,
-        status: { in: ["sent", "responded"] },
-      },
-      include: {
-        rfp: true,
-      },
-      orderBy: {
-        sentAt: "desc",
-      },
-    });
+    // Try to extract RFP ID from subject line [REF:rfp_id]
+    const refMatch = subject.match(/\[REF:([a-zA-Z0-9]+)\]/);
+    const rfpId = refMatch ? refMatch[1] : null;
+
+    let rfpVendor;
+
+    if (rfpId) {
+      // If we found an ID, look for that specific RFP link
+      rfpVendor = await prisma.rFPVendor.findUnique({
+        where: {
+          rfpId_vendorId: {
+            rfpId: rfpId,
+            vendorId: vendor.id,
+          },
+        },
+        include: {
+          rfp: true,
+        },
+      });
+    }
+
+    // Fallback: If no ID found or invalid ID, look for most recent active RFP
+    if (!rfpVendor) {
+      console.log(
+        "No valid REF ID found, falling back to most recent active RFP"
+      );
+      rfpVendor = await prisma.rFPVendor.findFirst({
+        where: {
+          vendorId: vendor.id,
+          status: { in: ["sent", "responded"] },
+        },
+        include: {
+          rfp: true,
+        },
+        orderBy: {
+          sentAt: "desc",
+        },
+      });
+    }
 
     if (!rfpVendor) {
       console.log(`No RFP found for vendor: ${vendor.id}`);
