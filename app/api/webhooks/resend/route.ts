@@ -47,10 +47,10 @@ export async function POST(request: NextRequest) {
     const subject = emailData.subject || "";
     let bodyText = emailData.text || emailData.html || "";
 
-    // Fetch full email content if body is missing but email_id is present
     if (!bodyText && emailData.email_id) {
       try {
         const { data: fullEmail } = await resend.emails.get(emailData.email_id);
+        console.log("Full email:", fullEmail);
         if (fullEmail) {
           bodyText = fullEmail.text || fullEmail.html || "";
         }
