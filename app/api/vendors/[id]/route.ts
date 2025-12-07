@@ -43,6 +43,10 @@ export async function PUT(
       },
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/vendors");
+    revalidatePath("/");
+
     return NextResponse.json(vendor);
   } catch (error: any) {
     console.error("Error updating vendor:", error);
@@ -68,6 +72,10 @@ export async function DELETE(
     await prisma.vendor.delete({
       where: { id },
     });
+
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/vendors");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true });
   } catch (error) {

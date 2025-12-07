@@ -47,6 +47,11 @@ export async function PUT(
       data: body,
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/");
+    revalidatePath("/rfps");
+    revalidatePath(`/rfps/${id}`);
+
     return NextResponse.json(rfp);
   } catch (error) {
     console.error("Error updating RFP:", error);
@@ -66,6 +71,10 @@ export async function DELETE(
     await prisma.rFP.delete({
       where: { id },
     });
+
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/");
+    revalidatePath("/rfps");
 
     return NextResponse.json({ success: true });
   } catch (error) {

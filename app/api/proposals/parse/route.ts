@@ -65,6 +65,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath(`/rfps/${rawEmail.rfpId}`);
+    revalidatePath(`/rfps/${rawEmail.rfpId}/compare`);
+
     return NextResponse.json(proposal, { status: 201 });
   } catch (error) {
     console.error("Error parsing proposal:", error);

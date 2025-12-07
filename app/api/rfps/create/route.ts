@@ -47,6 +47,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/");
+    revalidatePath("/rfps");
+
     return NextResponse.json(rfp, { status: 201 });
   } catch (error) {
     console.error("Error creating RFP:", error);

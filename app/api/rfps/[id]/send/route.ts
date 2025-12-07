@@ -182,6 +182,12 @@ Please submit your proposal by replying to this email.`;
       data: { status: "sent" },
     });
 
+    // Revalidate paths to update UI
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/");
+    revalidatePath("/rfps");
+    revalidatePath(`/rfps/${id}`);
+
     return NextResponse.json({ results });
   } catch (error) {
     console.error("Error sending RFP:", error);

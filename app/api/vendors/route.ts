@@ -36,6 +36,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/vendors");
+    revalidatePath("/");
+
     return NextResponse.json(vendor, { status: 201 });
   } catch (error: any) {
     console.error("Error creating vendor:", error);

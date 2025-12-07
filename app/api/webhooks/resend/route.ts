@@ -102,6 +102,9 @@ export async function POST(request: NextRequest) {
       data: { status: "responded" },
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath(`/rfps/${rfpVendor.rfpId}`);
+
     return NextResponse.json({ success: true, rawEmailId: rawEmail.id });
   } catch (error) {
     console.error("Error processing webhook:", error);
