@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { verifyResendWebhookSignature } from "@/lib/email/resend";
+import { verifyResendWebhookSignature, resend } from "@/lib/email/resend";
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +45,19 @@ export async function POST(request: NextRequest) {
     fromEmail = fromEmail.trim();
 
     const subject = emailData.subject || "";
-    const bodyText = emailData.text || emailData.html || "";
+    let bodyText = emailData.text || emailData.html || "";
+
+    // Fetch full email content if body is missing but email_id is present
+    if (!bodyText && emailData.email_id) {
+      try {
+        const { data: fullEmail } = await resend.emails.get(emailData.email_id);
+        if (fullEmail) {
+          bodyText = fullEmail.text || fullEmail.html || "";
+        }
+      } catch (fetchError) {
+        console.error("Failed to fetch full email content:", fetchError);
+      }
+    }
 
     const vendor = await prisma.vendor.findUnique({
       where: { email: fromEmail },
