@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
         const { data: fullEmail, error } = await resend.emails.receiving.get(
           emailData.email_id
         );
+        console.log(emailData.email_id);
+        console.log("Full email:", fullEmail);
         if (error) {
           console.error("Error fetching full email content:", error);
         }
