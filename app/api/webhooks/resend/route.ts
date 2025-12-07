@@ -49,8 +49,12 @@ export async function POST(request: NextRequest) {
 
     if (!bodyText && emailData.email_id) {
       try {
-        const { data: fullEmail } = await resend.emails.get(emailData.email_id);
-        console.log("Full email:", fullEmail);
+        const { data: fullEmail, error } = await resend.emails.receiving.get(
+          emailData.email_id
+        );
+        if (error) {
+          console.error("Error fetching full email content:", error);
+        }
         if (fullEmail) {
           bodyText = fullEmail.text || fullEmail.html || "";
         }
