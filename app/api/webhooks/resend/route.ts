@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
 
     const { revalidatePath } = await import("next/cache");
     revalidatePath(`/rfps/${rfpVendor.rfpId}`);
+    revalidatePath("/rfps");
 
     return NextResponse.json({ success: true, rawEmailId: rawEmail.id });
   } catch (error) {
