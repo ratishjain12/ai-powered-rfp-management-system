@@ -26,7 +26,24 @@ export async function POST(request: NextRequest) {
     }
 
     const emailData = payload.data;
-    const fromEmail = emailData.from?.email || emailData.from_email || "";
+
+    // Robust email extraction
+    let fromEmail = "";
+    if (typeof emailData.from === "string") {
+      fromEmail = emailData.from;
+    } else if (typeof emailData.from === "object" && emailData.from) {
+      fromEmail = emailData.from.email || "";
+    } else {
+      fromEmail = emailData.from_email || "";
+    }
+
+    // Extract pure email if format is "Name <email@example.com>"
+    const emailMatch = fromEmail.match(/<(.+)>/);
+    if (emailMatch) {
+      fromEmail = emailMatch[1];
+    }
+    fromEmail = fromEmail.trim();
+
     const subject = emailData.subject || "";
     const bodyText = emailData.text || emailData.html || "";
 
